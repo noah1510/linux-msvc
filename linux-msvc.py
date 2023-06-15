@@ -17,8 +17,8 @@ if os.name == "java":
     print("This script is not meant to be run on java.")
     sys.exit(1)
 
-shell_type = ''
 # check if fish is used as shell
+shell_type = ''
 shell = os.path.realpath(f'/proc/{os.getppid()}/exe')
 if shell.endswith("fish"):
     shell_type = "fish"
@@ -53,3 +53,8 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
     print(args)
+
+    if operations.install.check_dependencies() is False:
+        sys.exit(1)
+    else:
+        print("Dependencies are installed.")

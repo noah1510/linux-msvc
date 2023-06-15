@@ -1,4 +1,5 @@
 import sys
+import shutil
 
 # don't allow running the file as script
 if __name__ == "__main__":
@@ -44,3 +45,17 @@ def init_subparser(subparser):
         default=True,
         help="Don't create cross files. The cross files are used by meson to cross compile.",
     )
+
+
+# check if the required dependencies are installed
+# if not, print a message and return false
+# if yes, return true
+def check_dependencies() -> bool:
+    dependencies = ["wine", "winetricks", "git", "msiextract", "winbindd"]
+    for dep in dependencies:
+        if shutil.which(dep) is None:
+            print(f"Error: {dep} is not installed.")
+            print("wine, winetricks, git, msitools and winbind are required. Install them and try again.")
+            return False
+
+    return True
