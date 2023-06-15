@@ -6,8 +6,8 @@ if __name__ == "__main__":
     sys.exit(1)
 
 
-# A function to add the install command to the subparser
-# This also sets up all the arguments for the install command
+# A function to add the uninstall command to the subparser
+# This also sets up all the arguments for the uninstall command
 def init_subparser(subparser):
     uninstall_parser = subparser.add_parser("uninstall", help="Uninstall linux-msvc")
 

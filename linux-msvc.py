@@ -2,10 +2,14 @@
 import argparse
 import os
 import sys
+
+import operations.utils
+
 import operations.install
 import operations.uninstall
 import operations.update
 import operations.setenv
+
 
 # make sure the os is not windows
 if os.name == "nt":
@@ -43,6 +47,20 @@ if __name__ == "__main__":
     main_msg += "Bash and zsh support will be added in the future."
 
     parser = argparse.ArgumentParser(description=main_msg)
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s" + str(operations.utils.Consts.version()),
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        dest="verbose",
+        default=False,
+        help="Print more information",
+    )
+
     subparser_manager = parser.add_subparsers(help="operation to perform", dest="operation")
 
     # add the operation commands
@@ -52,9 +70,33 @@ if __name__ == "__main__":
     operations.setenv.init_subparser(subparser_manager)
 
     args = vars(parser.parse_args())
-    print(args)
 
-    if operations.install.check_dependencies() is False:
+    # print the arguments for debugging
+    if args["verbose"]:
+        print(args)
+
+    if operations.utils.check_dependencies() is False:
         sys.exit(1)
     else:
-        print("Dependencies are installed.")
+        if args["verbose"]:
+            print("Dependencies are installed.")
+
+    has_config = False
+    try:
+        current_config = operations.utils.LinuxMsvcConfig.load()
+        has_config = True
+        if args["verbose"]:
+            print("Config file exists.")
+            print(current_config)
+    except FileNotFoundError:
+        if args["verbose"]:
+            print("No config file exists yet.")
+
+    if args["operation"] == "install":
+        if has_config:
+            print("A config file already exists.")
+            print("If you want to reinstall linux-msvc, please uninstall it first.")
+            print("To update use the update command.")
+            sys.exit(1)
+
+        current_config = operations.install.install(args)

@@ -6,8 +6,8 @@ if __name__ == "__main__":
     sys.exit(1)
 
 
-# A function to add the install command to the subparser
-# This also sets up all the arguments for the install command
+# A function to add the update command to the subparser
+# This also sets up all the arguments for the update command
 def init_subparser(subparser):
     update_parser = subparser.add_parser("update", help="Update linux-msvc")
 
