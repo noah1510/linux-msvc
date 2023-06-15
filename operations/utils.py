@@ -51,6 +51,10 @@ class LinuxMsvcConfig(Dict):
         self[key] = value
 
     def save(self):
+        target_location = os.path.dirname(Consts.config_file())
+        if not os.path.exists(target_location):
+            os.makedirs(target_location, exist_ok=True)
+
         with open(Consts.config_file(), "w") as f:
             json.dump(self, f, indent=4)
 

@@ -127,6 +127,10 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     ])
 
     if args["verbose"]:
+        print("change windows version to win10")
+    subprocess.run(["winetricks", "settings", "win10"])
+
+    if args["verbose"]:
         print("killing the wineserver")
     subprocess.run(["wineserver", "-k"])
 
@@ -137,10 +141,6 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     if args["verbose"]:
         print("booting the wine server again")
     subprocess.run(["wine", "wineboot"])
-
-    if args["verbose"]:
-        print("change windows version to win10")
-    subprocess.run(["winetricks", "settings", "win10"])
 
     if config["create_config_file"]:
         if args["verbose"]:
