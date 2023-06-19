@@ -48,8 +48,6 @@ def meson(
     meson_command = ["meson"]
     meson_command += args["args"]
 
-    subprocess.run(["bash", "-c", "'echo $PATH'"])
-
     cross_file_dest = Path(config["destination"]) / "main-repo" / "cross_files" / "wine_msvc"
     if args["add_cross_file"]:
         meson_command += [
@@ -64,11 +62,8 @@ def wine(
     config: operations.utils.LinuxMsvcConfig,
     args: Dict
 ):
-    wine_command = [
-        "env",
-        config["destination"] + "/msvc/bin/x64/msvcenv.sh",
-        config["destination"] + "/msvc/bin/x64/wine-msvc.sh",
-        args["args"]
-    ]
+    operations.setenv.set_env(config, args)
 
+    wine_command = ["wine-msvc.sh"]
+    wine_command += args["args"]
     subprocess.run(wine_command)

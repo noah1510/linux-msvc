@@ -19,7 +19,7 @@ def init_subparser(subparser):
 def set_env(config: operations.utils.LinuxMsvcConfig, args: Dict):
 
     dest = Path(config["destination"]).expanduser()
-    os.environ['PATH'] += ':' + str(dest / "msvc" / "bin" / "x64")
+    os.environ['PATH'] = str(dest / "msvc" / "bin" / "x64") + ':' + os.environ['PATH']
 
     if not config["no_wine_prefix"]:
         wine_prefix = Path(dest / ".wineenv")
