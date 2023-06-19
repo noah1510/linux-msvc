@@ -45,10 +45,10 @@ def init_subparser(subparser):
     )
 
     remove_parser.add_argument(
-        "--keep_cross_files",
+        "--keep_main_repo",
         action="store_true",
         default=False,
-        help="Don't delete the cross files.",
+        help="Don't delete the main repo. This will keep the main repo.",
     )
 
 
@@ -81,10 +81,8 @@ def remove(conf: operations.utils.LinuxMsvcConfig, uninstall_conf: Dict):
         remove_dir(msvc_dir, uninstall_conf["verbose"], "msvc_install")
         remove_dir(msvc_wine_dir, uninstall_conf["verbose"], "msvc_wine_repo")
 
-    if not uninstall_conf["keep_cross_files"]:
-        cross_files_dir = dest_dir / "cross_files"
-        remove_dir(cross_files_dir, uninstall_conf["verbose"], "cross_files")
+    if not uninstall_conf["keep_main_repo"]:
+        remove_dir(dest_dir/"main-repo", uninstall_conf["verbose"], "linux-msvc")
 
-    remove_dir(dest_dir/"main-repo", uninstall_conf["verbose"], "linux-msvc")
     config_folder = operations.utils.Consts.config_file().parent
     remove_dir(config_folder, uninstall_conf["verbose"], "config folder")

@@ -3,7 +3,8 @@ c = 'cl'
 c_ld = 'link'
 cpp = 'cl'
 cpp_ld = 'link'
-exe_wrapper = 'wine-msvc.sh'
+strip = 'link'
+exe_wrapper = 'linux-msvc wine'
 
 [properties]
 needs_exe_wrapper = true

@@ -2,6 +2,7 @@ import os
 import sys
 import git
 import operations.utils
+import operations.setenv
 import subprocess
 
 from typing import Dict
@@ -41,14 +42,6 @@ def init_subparser(subparser):
     )
 
     install_parser.add_argument(
-        "--no_cross_files",
-        action="store_false",
-        dest="copy_cross_files",
-        default=True,
-        help="Don't create cross files. The cross files are used by meson to cross compile.",
-    )
-
-    install_parser.add_argument(
         "--no_cache",
         action="store_false",
         dest="use_cache",
@@ -84,6 +77,12 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     git.Repo.clone_from(
         "https://github.com/mstorsjo/msvc-wine/",
         dest / "msvc-wine-repo",
+        verbose=args["verbose"],
+    )
+
+    git.Repo.clone_from(
+        "https://github.com/microsoft/vcpkg",
+        dest / "vcpkg",
         verbose=args["verbose"],
     )
 
@@ -149,3 +148,13 @@ def setup_wine(config: operations.utils.LinuxMsvcConfig, verbose=False):
     if verbose:
         print("booting the wine server again")
     subprocess.run(["wine", "wineboot"])
+
+
+def setup_vcpkg(config: operations.utils.LinuxMsvcConfig, verbose=False):
+    vcpkg_setup = [
+        "cmd",
+        "/c",
+        "vcpkg/bootstrap-vcpkg.bat",
+    ]
+    operations.setenv.set_env(config, {})
+    subprocess.run(vcpkg_setup)
