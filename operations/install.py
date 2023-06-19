@@ -1,6 +1,8 @@
 import os
 import sys
 import git
+import wget as wget
+
 import operations.utils
 import operations.setenv
 import subprocess
@@ -55,7 +57,6 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     config["destination"] = args["destination"]
     config["no_wine_prefix"] = args["no_wine_prefix"]
     config["create_config_file"] = args["create_config_file"]
-    config["copy_cross_files"] = args["copy_cross_files"]
     config["use_cache"] = args["use_cache"]
 
     if args["verbose"]:
@@ -74,17 +75,19 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     if not cache_path.exists():
         cache_path.mkdir(parents=True)
 
-    git.Repo.clone_from(
-        "https://github.com/mstorsjo/msvc-wine/",
-        dest / "msvc-wine-repo",
-        verbose=args["verbose"],
-    )
+    if not (dest / "msvc-wine-repo").exists():
+        git.Repo.clone_from(
+            "https://github.com/mstorsjo/msvc-wine/",
+            dest / "msvc-wine-repo",
+            verbose=args["verbose"],
+        )
 
-    git.Repo.clone_from(
-        "https://github.com/microsoft/vcpkg",
-        dest / "vcpkg",
-        verbose=args["verbose"],
-    )
+    if not (dest / "vcpkg").exists():
+        git.Repo.clone_from(
+            "https://github.com/microsoft/vcpkg",
+            dest / "vcpkg",
+            verbose=args["verbose"],
+        )
 
     if not config["no_wine_prefix"]:
         wine_prefix = Path(dest / ".wineenv")
@@ -113,14 +116,29 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     ])
 
     setup_wine(config, args["verbose"])
+    powershell_url = "https://github.com/PowerShell/PowerShell/releases/download/v7.3.4/PowerShell-7.3.4-win-x64.msi"
+    powershell_installer = Path(dest/"cache"/"PowerShell-7.3.4-win-x64.msi")
+    if not powershell_installer.exists():
+        wget.download(url=powershell_url, out=str(powershell_installer), bar=None)
+
+    subprocess.run([
+        "wine",
+        "msiexec.exe",
+        "/quiet",
+        "/i",
+        str(powershell_installer)
+    ])
+
+    setup_vcpkg(config, args["verbose"])
 
     if config["create_config_file"]:
         if args["verbose"]:
             print("saving the configuration")
         config.save()
 
-    print("finished installing, to use you have to setup the environment variables.")
-    print("Check the setenv operation for more information.")
+    print("finished installing.")
+    print("use 'linux-msvc shell' to start a shell with the environment set up.")
+    print("Or use the 'linux-msvc meson command to run meson with the environment set up.")
 
     return config
 
@@ -134,8 +152,20 @@ def setup_wine(config: operations.utils.LinuxMsvcConfig, verbose=False):
     os.environ["WINEARCH"] = "win64"
 
     if verbose:
+        print("killing the wineserver")
+    subprocess.run(["wineserver", "-k"])
+
+    if verbose:
         print("change windows version to win10")
     subprocess.run(["winetricks", "settings", "win10"])
+
+    if verbose:
+        print("installing 7zip")
+    subprocess.run(["winetricks", "7zip", "-q"])
+
+    if verbose:
+        print("installing cmake")
+    subprocess.run(["winetricks", "cmake", "-q"])
 
     if verbose:
         print("killing the wineserver")
@@ -152,9 +182,10 @@ def setup_wine(config: operations.utils.LinuxMsvcConfig, verbose=False):
 
 def setup_vcpkg(config: operations.utils.LinuxMsvcConfig, verbose=False):
     vcpkg_setup = [
-        "cmd",
-        "/c",
-        "vcpkg/bootstrap-vcpkg.bat",
+        "wineconsole",
+        "pwsh.exe",
+        config["destination"] + "/scripts/bootstrap.ps1",
+        "-disableMetrics",
     ]
     operations.setenv.set_env(config, {})
     subprocess.run(vcpkg_setup)

@@ -45,10 +45,17 @@ def init_subparser(subparser):
     )
 
     remove_parser.add_argument(
-        "--keep_main_repo",
+        "--delete_main_repo",
         action="store_true",
         default=False,
         help="Don't delete the main repo. This will keep the main repo.",
+    )
+
+    remove_parser.add_argument(
+        "--keep_vcpkg",
+        action="store_true",
+        default=False,
+        help="Don't delete the vcpkg installation. This will keep the vcpkg installation.",
     )
 
 
@@ -81,7 +88,11 @@ def remove(conf: operations.utils.LinuxMsvcConfig, uninstall_conf: Dict):
         remove_dir(msvc_dir, uninstall_conf["verbose"], "msvc_install")
         remove_dir(msvc_wine_dir, uninstall_conf["verbose"], "msvc_wine_repo")
 
-    if not uninstall_conf["keep_main_repo"]:
+    if not uninstall_conf["keep_vcpkg"]:
+        vcpkg_dir = dest_dir / "vcpkg"
+        remove_dir(vcpkg_dir, uninstall_conf["verbose"], "vcpkg")
+
+    if uninstall_conf["delete_main_repo"]:
         remove_dir(dest_dir/"main-repo", uninstall_conf["verbose"], "linux-msvc")
 
     config_folder = operations.utils.Consts.config_file().parent

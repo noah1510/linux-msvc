@@ -13,7 +13,13 @@ if __name__ == "__main__":
 
 
 def init_subparser(subparser):
-    setenv_parser = subparser.add_parser("setenv", help="Set environment variables")
+    shell_parser = subparser.add_parser("shell", help="Start a shell with the environment set up")
+
+    shell_parser.add_argument(
+        "--type",
+        default="",
+        help="The type of shell to start. The default is the current shell.",
+    )
 
 
 def set_env(config: operations.utils.LinuxMsvcConfig, args: Dict):

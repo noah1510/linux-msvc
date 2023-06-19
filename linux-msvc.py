@@ -1,6 +1,8 @@
 #!/bin/python3
 import argparse
 import os
+import shutil
+import subprocess
 import sys
 
 import operations.utils
@@ -25,20 +27,6 @@ if os.name == "java":
 # check if fish is used as shell
 shell_type = ''
 shell = os.path.realpath(f'/proc/{os.getppid()}/exe')
-if shell.endswith("fish"):
-    shell_type = "fish"
-elif shell.endswith("bash"):
-    shell_type = "bash"
-    print("Bash is not officially supported yet.")
-    print("Some features might not work as expected.")
-elif shell.endswith("zsh"):
-    shell_type = "zsh"
-    print("Bash is not officially supported yet.")
-    print("Some features might not work as expected.")
-else:
-    print("This script is only supported on fish, bash and zsh.")
-    sys.exit(1)
-
 
 # parse the command line arguments if run as script
 if __name__ == "__main__":
@@ -121,5 +109,17 @@ if __name__ == "__main__":
         case "wine":
             operations.tools.wine(current_config, args)
 
-        case "setenv":
+        case "shell":
             operations.setenv.set_env(current_config, args)
+            if args["type"] != "":
+                shell = args["type"]
+                if shutil.which(shell) is None:
+                    print("The shell " + shell + " is not installed.")
+                    print("Please install it first. Or select a different shell.")
+                    sys.exit(1)
+
+            if args["verbose"]:
+                print("The environment variables are set.")
+                print("launching a new shell of type: " + shell)
+
+            subprocess.run([shell, "-l"])
