@@ -25,15 +25,11 @@ def init_subparser(subparser):
     )
 
     install_parser.add_argument(
-        "--wine_prefix",
-        default="~/msvc_linux/.winepref",
-        help="Where to install the wine prefix",
-    )
-
-    install_parser.add_argument(
-        "--msvc_path",
-        default="~/msvc_linux/msvc",
-        help="Where to install MSVC",
+        "--no_wine_prefix",
+        dest="no_wine_prefix",
+        action="store_true",
+        default=False,
+        help="don't override the wine prefix with dest/.wineenv",
     )
 
     install_parser.add_argument(
@@ -64,8 +60,7 @@ def init_subparser(subparser):
 def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     config = operations.utils.LinuxMsvcConfig()
     config["destination"] = args["destination"]
-    config["wine_prefix"] = args["wine_prefix"]
-    config["msvc_path"] = args["msvc_path"]
+    config["no_wine_prefix"] = args["no_wine_prefix"]
     config["create_config_file"] = args["create_config_file"]
     config["copy_cross_files"] = args["copy_cross_files"]
     config["use_cache"] = args["use_cache"]
@@ -78,13 +73,9 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     if not dest.exists():
         dest.mkdir(parents=True)
 
-    msvc_path = Path(os.path.expanduser(config["msvc_path"]))
+    msvc_path = Path(dest / "msvc")
     if not msvc_path.exists():
         msvc_path.mkdir(parents=True)
-
-    wine_prefix = Path(os.path.expanduser(config["wine_prefix"]))
-    if not wine_prefix.exists():
-        wine_prefix.mkdir(parents=True)
 
     cache_path = dest / "cache"
     if not cache_path.exists():
@@ -102,7 +93,9 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
         verbose=args["verbose"],
     )
 
-    os.environ["WINEPREFIX"] = str(wine_prefix)
+    if not config["no_wine_prefix"]:
+        wine_prefix = Path(dest / ".wineenv")
+        os.environ["WINEPREFIX"] = str(wine_prefix)
     os.environ["WINEARCH"] = "win64"
 
     dlcomand = [
@@ -126,21 +119,7 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
         str(msvc_path)
     ])
 
-    if args["verbose"]:
-        print("change windows version to win10")
-    subprocess.run(["winetricks", "settings", "win10"])
-
-    if args["verbose"]:
-        print("killing the wineserver")
-    subprocess.run(["wineserver", "-k"])
-
-    if args["verbose"]:
-        print("making the wineserver persistent")
-    subprocess.run(["wineserver", "-p"])
-
-    if args["verbose"]:
-        print("booting the wine server again")
-    subprocess.run(["wine", "wineboot"])
+    setup_wine(config, args["verbose"])
 
     if config["create_config_file"]:
         if args["verbose"]:
@@ -151,3 +130,28 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
     print("Check the setenv operation for more information.")
 
     return config
+
+
+def setup_wine(config: operations.utils.LinuxMsvcConfig, verbose=False):
+
+    if not config["no_wine_prefix"]:
+        dest = Path(os.path.expanduser(config["destination"]))
+        wine_prefix = Path(dest / ".wineenv")
+        os.environ["WINEPREFIX"] = str(wine_prefix)
+    os.environ["WINEARCH"] = "win64"
+
+    if verbose:
+        print("change windows version to win10")
+    subprocess.run(["winetricks", "settings", "win10"])
+
+    if verbose:
+        print("killing the wineserver")
+    subprocess.run(["wineserver", "-k"])
+
+    if verbose:
+        print("making the wineserver persistent")
+    subprocess.run(["wineserver", "-p"])
+
+    if verbose:
+        print("booting the wine server again")
+    subprocess.run(["wine", "wineboot"])
