@@ -1,7 +1,9 @@
 [binaries]
-c = 'linux_msvc cl'
-cpp = 'linux_msvc cl'
-exe_wrapper = 'linux_msvc wine'
+c = 'cl'
+c_ld = 'link'
+cpp = 'cl'
+cpp_ld = 'link'
+exe_wrapper = 'wine-msvc.sh'
 
 [properties]
 needs_exe_wrapper = true

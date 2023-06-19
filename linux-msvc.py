@@ -116,9 +116,10 @@ if __name__ == "__main__":
 
             operations.remove.remove(current_config, args)
 
-        case "cl":
-            operations.tools.cl(current_config, args)
-        case "link":
-            operations.tools.link(current_config, args)
+        case "meson":
+            operations.tools.meson(current_config, args)
         case "wine":
             operations.tools.wine(current_config, args)
+
+        case "setenv":
+            operations.setenv.set_env(current_config, args)

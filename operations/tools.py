@@ -3,6 +3,7 @@ import sys
 import argparse
 
 import operations.utils
+import operations.setenv
 
 from typing import Dict
 
@@ -13,20 +14,21 @@ if __name__ == "__main__":
 
 
 def init_subparsers(subparser):
-    cl_parser = subparser.add_parser("cl", help="Use the cl compiler")
-    link_parser = subparser.add_parser("link", help="Use the msvc linker")
+    meson_parser = subparser.add_parser("meson", help="A wrapper around meson to use it with msvc")
     wine_parser = subparser.add_parser("wine", help="Use msvc wine")
 
-    cl_parser.add_argument(
-        "args",
-        nargs=argparse.REMAINDER,
-        help="Arguments to pass to cl",
+    meson_parser.add_argument(
+        "--add_cross_file",
+        dest="add_cross_file",
+        action="store_true",
+        default=False,
+        help="Add the cross file to the meson command",
     )
 
-    link_parser.add_argument(
+    meson_parser.add_argument(
         "args",
         nargs=argparse.REMAINDER,
-        help="Arguments to pass to link",
+        help="Arguments to pass to meson",
     )
 
     wine_parser.add_argument(
@@ -36,32 +38,24 @@ def init_subparsers(subparser):
     )
 
 
-def cl(
+def meson(
     config: operations.utils.LinuxMsvcConfig,
     args: Dict
 ):
-    cl_command = [
-        "env",
-        config["destination"] + "/msvc-wine-repo/wrappers/msvcenv.sh",
-        config["destination"] + "/msvc-wine-repo/wrappers/cl",
+    operations.setenv.set_env(config, args)
+
+    meson_command = [
+        "meson",
         args["args"]
     ]
 
-    subprocess.run(cl_command)
+    if args["add_cross_file"]:
+        meson_command += [
+            "--cross-file",
+            config["destination"] + "/main_repo/cross_files/wine_msvc"
+        ]
 
-
-def link(
-    config: operations.utils.LinuxMsvcConfig,
-    args: Dict
-):
-    cl_command = [
-        "env",
-        config["destination"] + "/msvc-wine-repo/wrappers/msvcenv.sh",
-        config["destination"] + "/msvc-wine-repo/wrappers/link",
-        args["args"]
-    ]
-
-    subprocess.run(cl_command)
+    subprocess.run(meson_command)
 
 
 def wine(
