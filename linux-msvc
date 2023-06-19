@@ -90,7 +90,7 @@ if [ "$no_config_file" = "true" ]; then
     pipenv install
 
     # execute the linux-msvc script from the repo
-    ./linux-msvc.sh "$@"
+    ./linux-msvc "$@"
 else
     # check if the current script is executed from destination
     config_dest="$(jq -r '.destination' "$config_file")"
