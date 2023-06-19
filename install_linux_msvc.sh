@@ -97,6 +97,7 @@ if [ "$no_config_file" = "true" ]; then
     fi
 
     echo "#!/bin/bash" > "$HOME/.local/bin/linux-msvc"
+    echo "export PIPENV_PIPFILE=\"$install_location/main-repo/Pipfile\"" >> "$HOME/.local/bin/linux-msvc"
     echo "pipenv run python3 $install_location/main-repo/linux-msvc.py \"\$@\"" >> "$HOME/.local/bin/linux-msvc"
 
     chmod +x "$HOME/.local/bin/linux-msvc"

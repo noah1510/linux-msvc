@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import argparse
+from pathlib import Path
 
 import operations.utils
 import operations.setenv
@@ -44,15 +45,16 @@ def meson(
 ):
     operations.setenv.set_env(config, args)
 
-    meson_command = [
-        "meson",
-        args["args"]
-    ]
+    meson_command = ["meson"]
+    meson_command += args["args"]
 
+    subprocess.run(["bash", "-c", "'echo $PATH'"])
+
+    cross_file_dest = Path(config["destination"]) / "main-repo" / "cross_files" / "wine_msvc"
     if args["add_cross_file"]:
         meson_command += [
             "--cross-file",
-            config["destination"] + "/main_repo/cross_files/wine_msvc"
+            str(cross_file_dest)
         ]
 
     subprocess.run(meson_command)
@@ -64,8 +66,8 @@ def wine(
 ):
     wine_command = [
         "env",
-        config["destination"] + "/msvc-wine-repo/wrappers/msvcenv.sh",
-        config["destination"] + "/msvc-wine-repo/wrappers/wine-msvc.sh",
+        config["destination"] + "/msvc/bin/x64/msvcenv.sh",
+        config["destination"] + "/msvc/bin/x64/wine-msvc.sh",
         args["args"]
     ]
 
