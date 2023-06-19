@@ -1,6 +1,7 @@
 import shutil
 import sys
 from typing import Dict
+from pathlib import Path
 
 import semver
 import os
@@ -13,28 +14,28 @@ class Consts:
         return semver.VersionInfo.parse("0.1.0")
 
     @staticmethod
-    def get_configs_dir() -> os.path:
+    def get_configs_dir() -> Path:
         if os.name != "posix":
             raise Exception("This function is only supported on posix systems.")
 
         if os.getenv("XDG_CONFIG_HOME") is not None:
-            return os.getenv("XDG_CONFIG_HOME")
+            return Path(os.getenv("XDG_CONFIG_HOME"))
 
         if sys.platform == "darwin":
-            return os.path.expanduser("~/Library/Preferences")
+            return Path(os.path.expanduser("~/Library/Preferences"))
 
-        return os.path.expanduser("~/.config")
+        return Path(os.path.expanduser("~/.config"))
 
     @staticmethod
-    def get_app_config_dir(app_name: str) -> os.path:
+    def get_app_config_dir(app_name: str) -> Path:
         if os.name != "posix":
             raise Exception("This function is only supported on posix systems.")
 
-        return os.path.join(Consts.get_configs_dir(), app_name)
+        return Consts.get_configs_dir() / app_name
 
     @staticmethod
-    def config_file() -> os.path:
-        return os.path.join(Consts.get_app_config_dir("msvc_linux"), "config.json")
+    def config_file() -> Path:
+        return Consts.get_app_config_dir("msvc_linux") / "config.json"
 
 
 class LinuxMsvcConfig(Dict):

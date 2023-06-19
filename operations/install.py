@@ -82,12 +82,6 @@ def install(args: Dict) -> operations.utils.LinuxMsvcConfig:
         cache_path.mkdir(parents=True)
 
     git.Repo.clone_from(
-        "https://github.com/noah1510/linux-msvc",
-        dest/"main-repo",
-        verbose=args["verbose"],
-    )
-
-    git.Repo.clone_from(
         "https://github.com/mstorsjo/msvc-wine/",
         dest / "msvc-wine-repo",
         verbose=args["verbose"],

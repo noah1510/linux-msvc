@@ -6,7 +6,7 @@ import sys
 import operations.utils
 
 import operations.install
-import operations.uninstall
+import operations.remove
 import operations.update
 import operations.setenv
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     # add the operation commands
     operations.install.init_subparser(subparser_manager)
-    operations.uninstall.init_subparser(subparser_manager)
+    operations.remove.init_subparser(subparser_manager)
     operations.update.init_subparser(subparser_manager)
     operations.setenv.init_subparser(subparser_manager)
 
@@ -82,6 +82,7 @@ if __name__ == "__main__":
             print("Dependencies are installed.")
 
     has_config = False
+    current_config = operations.utils.LinuxMsvcConfig()
     try:
         current_config = operations.utils.LinuxMsvcConfig.load()
         has_config = True
@@ -92,11 +93,24 @@ if __name__ == "__main__":
         if args["verbose"]:
             print("No config file exists yet.")
 
-    if args["operation"] == "install":
-        if has_config:
-            print("A config file already exists.")
-            print("If you want to reinstall linux-msvc, please uninstall it first.")
-            print("To update use the update command.")
-            sys.exit(1)
+    match args["operation"]:
+        case "install":
+            if has_config:
+                print("A config file already exists.")
+                print("If you want to reinstall linux-msvc, please uninstall it first.")
+                print("To update use the update command.")
+                sys.exit(1)
 
-        current_config = operations.install.install(args)
+            current_config = operations.install.install(args)
+
+        case "remove":
+            if not has_config:
+                if not args["destination"]:
+                    print("No config file exists and no destination was given.")
+                    print("Please specify a destination.")
+                    sys.exit(1)
+
+                current_config["destination"] = args["destination"]
+
+            operations.remove.remove(current_config, args)
+
