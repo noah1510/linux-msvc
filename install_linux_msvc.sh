@@ -42,12 +42,6 @@ config_file="$config_dir/msvc_linux/config.json"
 # check if the config file exists
 no_config_file="$( [ ! -f "$config_file" ] && echo "true"; )"
 if [ "$no_config_file" = "true" ]; then
-    # check if the install command is called
-    # if has to be in $1 or $2 if $1 is -v
-    if [ "$1" != "install" ] && [ "$2" != "install" ]; then
-        echo "There is no installation. Please use the install command to install the script."
-        exit 1
-    fi
 
     # run the first install script
     echo "Running first install script"
@@ -90,18 +84,25 @@ if [ "$no_config_file" = "true" ]; then
     pipenv install
 
     # execute the linux-msvc script from the repo
-    ./linux-msvc "$@"
-else
-    # check if the current script is executed from destination
-    config_dest="$(jq -r '.destination' "$config_file")"
-    config_dest="$(full_readlink "$config_dest"; )"
-
-    if [ "$file_dir" != "config_dest" ]; then
-        echo "There is already an installation. Please use the installed script instead of this one."
-        echo "It should be located at $config_dest/main-repo"
+    pipenv run python3 "$install_location"/main-repo/linux-msvc.py install "$@"
+    # check if the script was executed successfully
+    if [ $? -ne 0 ]; then
+        echo "The script exited with an error. Please check the output for more information."
         exit 1
     fi
 
-    pipenv run python3 "$config_dest"/main-repo/linux-msvc.py "$@"
+    # put a wrapper_fle in $USER/.local/bin
+    if [ ! -d "$HOME/.local/bin" ]; then
+        mkdir -p "$HOME/.local/bin"
+    fi
+
+    echo "#!/bin/bash" > "$HOME/.local/bin/linux-msvc"
+    echo "pipenv run python3 $install_location/main-repo/linux-msvc.py \"\$@\"" >> "$HOME/.local/bin/linux-msvc"
+
+    chmod +x "$HOME/.local/bin/linux-msvc"
+    exit 0
 fi
 
+echo "Use this script only for the initial install"
+echo "however the install command was not used or there is already an installation"
+exit 1

@@ -1,7 +1,7 @@
 [binaries]
-c = 'cl'
-cpp = 'cl'
-exe_wrapper = 'env msvcenv.sh wine-msvc.sh'
+c = 'linux_msvc cl'
+cpp = 'linux_msvc cl'
+exe_wrapper = 'linux_msvc wine'
 
 [properties]
 needs_exe_wrapper = true

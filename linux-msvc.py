@@ -9,6 +9,7 @@ import operations.install
 import operations.remove
 import operations.update
 import operations.setenv
+import operations.tools
 
 
 # make sure the os is not windows
@@ -68,6 +69,7 @@ if __name__ == "__main__":
     operations.remove.init_subparser(subparser_manager)
     operations.update.init_subparser(subparser_manager)
     operations.setenv.init_subparser(subparser_manager)
+    operations.tools.init_subparsers(subparser_manager)
 
     args = vars(parser.parse_args())
 
@@ -114,3 +116,9 @@ if __name__ == "__main__":
 
             operations.remove.remove(current_config, args)
 
+        case "cl":
+            operations.tools.cl(current_config, args)
+        case "link":
+            operations.tools.link(current_config, args)
+        case "wine":
+            operations.tools.wine(current_config, args)

@@ -76,7 +76,7 @@ def remove(conf: operations.utils.LinuxMsvcConfig, uninstall_conf: Dict):
 
     if not uninstall_conf["keep_msvc"]:
         msvc_dir = dest_dir / "msvc"
-        msvc_wine_dir = dest_dir / "msvc_wine"
+        msvc_wine_dir = dest_dir / "msvc-wine-repo"
 
         remove_dir(msvc_dir, uninstall_conf["verbose"], "msvc_install")
         remove_dir(msvc_wine_dir, uninstall_conf["verbose"], "msvc_wine_repo")
