@@ -59,41 +59,78 @@ def init_subparser(subparser):
     )
 
 
-def remove_dir(
-    directory: Path,
-    verbose: bool,
-    dirname: str,
-):
-    if directory.exists():
-        if verbose:
-            print(f"Removing {dirname} directory: {directory}")
-        shutil.rmtree(directory)
+class RemoveDirectory(Dict):
+    def __init__(
+            self,
+            path: Path,
+            verbose: bool,
+            condition: bool = True,
+            directory_name: str = None,
+    ):
+        super().__init__()
+        self["path"] = path
+        self["verbose"] = verbose
+        self["condition"] = condition
+        if directory_name is None:
+            self["directory_name"] = path.name
+        else:
+            self["directory_name"] = directory_name
+
+    def remove(self):
+        if not self["condition"]:
+            return
+
+        if self["path"].exists():
+            if self["verbose"]:
+                print(f"Removing {self['directory_name']} directory: {self['path']}")
+            shutil.rmtree(self["path"])
 
 
 def remove(conf: operations.utils.LinuxMsvcConfig, uninstall_conf: Dict):
-    dest_dir = Path(os.path.expanduser(conf["destination"]))
+    dirs_to_remove = [
+        RemoveDirectory(
+            conf.destination() / "cache",
+            verbose=uninstall_conf["verbose"],
+            condition=uninstall_conf["delete_cache"],
+            directory_name="cache",
+        ),
+        RemoveDirectory(
+            conf.destination() / ".wineenv",
+            verbose=uninstall_conf["verbose"],
+            condition=not uninstall_conf["keep_wine_prefix"],
+            directory_name="wine prefix",
+        ),
+        RemoveDirectory(
+            conf.destination() / "msvc",
+            verbose=uninstall_conf["verbose"],
+            condition=not uninstall_conf["keep_msvc"],
+            directory_name="msvc_install",
+        ),
+        RemoveDirectory(
+            conf.destination() / "msvc-wine-repo",
+            verbose=uninstall_conf["verbose"],
+            condition=not uninstall_conf["keep_msvc"],
+            directory_name="msvc_wine_repo",
+        ),
+        RemoveDirectory(
+            conf.destination() / "vcpkg",
+            verbose=uninstall_conf["verbose"],
+            condition=not uninstall_conf["keep_vcpkg"],
+            directory_name="vcpkg",
+        ),
+        RemoveDirectory(
+            conf.destination() / "main-repo",
+            verbose=uninstall_conf["verbose"],
+            condition=uninstall_conf["delete_main_repo"],
+            directory_name="main_repo",
+        ),
+        RemoveDirectory(
+            operations.utils.Consts.config_file().parent,
+            verbose=uninstall_conf["verbose"],
+            condition=True,
+            directory_name="config folder",
+        ),
+    ]
 
-    if uninstall_conf["delete_cache"]:
-        cache_dir = dest_dir / "cache"
-        remove_dir(cache_dir, uninstall_conf["verbose"], "cache")
-
-    if not uninstall_conf["keep_wine_prefix"]:
-        prefix_dir = dest_dir / ".wineenv"
-        remove_dir(prefix_dir, uninstall_conf["verbose"], "wine prefix")
-
-    if not uninstall_conf["keep_msvc"]:
-        msvc_dir = dest_dir / "msvc"
-        msvc_wine_dir = dest_dir / "msvc-wine-repo"
-
-        remove_dir(msvc_dir, uninstall_conf["verbose"], "msvc_install")
-        remove_dir(msvc_wine_dir, uninstall_conf["verbose"], "msvc_wine_repo")
-
-    if not uninstall_conf["keep_vcpkg"]:
-        vcpkg_dir = dest_dir / "vcpkg"
-        remove_dir(vcpkg_dir, uninstall_conf["verbose"], "vcpkg")
-
-    if uninstall_conf["delete_main_repo"]:
-        remove_dir(dest_dir/"main-repo", uninstall_conf["verbose"], "linux-msvc")
-
-    config_folder = operations.utils.Consts.config_file().parent
-    remove_dir(config_folder, uninstall_conf["verbose"], "config folder")
+    for directory in dirs_to_remove:
+        directory.remove()

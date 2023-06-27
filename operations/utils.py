@@ -1,4 +1,5 @@
 import shutil
+import subprocess
 import sys
 from typing import Dict
 from pathlib import Path
@@ -6,6 +7,8 @@ from pathlib import Path
 import semver
 import os
 import json
+
+import wget
 
 
 class Consts:
@@ -51,6 +54,9 @@ class LinuxMsvcConfig(Dict):
     def set(self, key: str, value):
         self[key] = value
 
+    def destination(self) -> Path:
+        return Path(self.get("destination")).expanduser()
+
     def save(self):
         target_location = os.path.dirname(Consts.config_file())
         if not os.path.exists(target_location):
@@ -68,6 +74,26 @@ class LinuxMsvcConfig(Dict):
             return LinuxMsvcConfig(json.load(f))
 
 
+# returns the full path of a cached file
+# if it doesn't exist, download it
+# if no filename is given, the filename will be the basename of the download url
+def get_chached_file(config: LinuxMsvcConfig, download_url: str, file_name: str = None, verbose=False) -> Path:
+    cache_dir = config.destination() / "cache"
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir, exist_ok=True)
+
+    if file_name is None:
+        file_name = os.path.basename(download_url)
+
+    cached_file = cache_dir / file_name
+    if not os.path.exists(cached_file):
+        if verbose:
+            print(f"Downloading {file_name}...")
+        wget.download(url=download_url, out=str(cached_file), bar=None)
+
+    return cached_file
+
+
 # check if the required dependencies are installed
 # if not, print a message and return false
 # if yes, return true
@@ -81,3 +107,28 @@ def check_dependencies() -> bool:
 
     return True
 
+
+def set_env(config: LinuxMsvcConfig, args: Dict, verbose=False):
+
+    dest = Path(config["destination"]).expanduser()
+    os.environ['PATH'] = str(dest / "msvc" / "bin" / "x64") + ':' + os.environ['PATH']
+
+    if not config["no_wine_prefix"]:
+        wine_prefix = Path(dest / ".wineenv")
+        os.environ["WINEPREFIX"] = str(wine_prefix)
+
+    os.environ["WINEARCH"] = "win64"
+
+    if not verbose:
+        if "verbose" in args:
+            verbose = args["verbose"]
+
+    if not verbose:
+        os.environ["WINEDEBUG"] = "-all"
+
+    env_command = [
+        "env",
+        "msvcenv.sh",
+    ]
+
+    subprocess.run(env_command)
