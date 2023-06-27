@@ -105,6 +105,7 @@ def install_winetricks_packages(
             file_name="winetricks",
             verbose=verbose
         )
+        subprocess.run(["chmod", "+x", str(winetricks_exe)])
 
     operations.utils.set_env(config, {}, verbose)
 
