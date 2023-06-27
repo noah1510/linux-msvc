@@ -96,9 +96,11 @@ if [ "$no_config_file" = "true" ]; then
         mkdir -p "$HOME/.local/bin"
     fi
 
-    echo "#!/bin/bash" > "$HOME/.local/bin/linux-msvc"
-    echo "export PIPENV_PIPFILE=\"$install_location/main-repo/Pipfile\"" >> "$HOME/.local/bin/linux-msvc"
-    echo "pipenv run python3 $install_location/main-repo/linux-msvc.py \"\$@\"" >> "$HOME/.local/bin/linux-msvc"
+    SCRIPT_LOCATION="$HOME/.local/bin/linux-msvc"
+    echo "#!/bin/bash" > "$SCRIPT_LOCATION"
+    echo 'PARENT_COMMAND=$(ps -o comm= $PPID)' >> "$SCRIPT_LOCATION"
+    echo "export PIPENV_PIPFILE=\"$install_location/main-repo/Pipfile\"" >> "$SCRIPT_LOCATION"
+    echo "pipenv run python3 $install_location/main-repo/linux-msvc.py --base_shell \$PARENT_COMMAND \"\$@\"" >> "$SCRIPT_LOCATION"
 
     chmod +x "$HOME/.local/bin/linux-msvc"
     exit 0

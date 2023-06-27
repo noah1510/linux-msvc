@@ -12,6 +12,7 @@ import operations.remove
 import operations.update
 import operations.setenv
 import operations.tools
+import operations.config
 
 
 # make sure the os is not windows
@@ -25,8 +26,7 @@ if os.name == "java":
     sys.exit(1)
 
 # check if fish is used as shell
-shell_type = ''
-shell = os.path.realpath(f'/proc/{os.getppid()}/exe')
+caller_shell = os.path.realpath(f'/proc/{os.getppid()}/exe')
 
 # parse the command line arguments if run as script
 if __name__ == "__main__":
@@ -49,6 +49,13 @@ if __name__ == "__main__":
         default=False,
         help="Print more information",
     )
+    parser.add_argument(
+        "--base_shell",
+        dest="base_shell",
+        default="bash",
+        help="The shell that called the wrapper script. Don't try to set this manually, it is always set by the "
+             "wrapper script.",
+    )
 
     subparser_manager = parser.add_subparsers(help="operation to perform", dest="operation")
 
@@ -58,6 +65,7 @@ if __name__ == "__main__":
     operations.update.init_subparser(subparser_manager)
     operations.setenv.init_subparser(subparser_manager)
     operations.tools.init_subparsers(subparser_manager)
+    operations.config.init_subparser(subparser_manager)
 
     args = vars(parser.parse_args())
 
@@ -104,20 +112,29 @@ if __name__ == "__main__":
 
             operations.remove.remove(current_config, args)
 
+        case "config":
+            operations.config.configure(current_config, args)
         case "meson":
             operations.tools.meson(current_config, args)
         case "wine":
             operations.tools.wine(current_config, args)
+        case "pwsh":
+            operations.tools.powershell(current_config, args)
 
         case "shell":
-            operations.setenv.set_env(current_config, args)
             if args["type"] != "":
                 shell = args["type"]
-                if shutil.which(shell) is None:
-                    print("The shell " + shell + " is not installed.")
-                    print("Please install it first. Or select a different shell.")
-                    sys.exit(1)
+            elif args["base_shell"] == "":
+                shell = caller_shell
+            else:
+                shell = args["base_shell"]
 
+            if shutil.which(shell) is None:
+                print("The shell " + shell + " is not installed.")
+                print("Please install it first. Or select a different shell.")
+                sys.exit(1)
+
+            operations.utils.set_env(current_config, args)
             if args["verbose"]:
                 print("The environment variables are set.")
                 print("launching a new shell of type: " + shell)
